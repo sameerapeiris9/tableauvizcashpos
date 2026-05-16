@@ -268,7 +268,8 @@ html,body{
       var endDv    = enc.ending   ? row[enc.ending.name]    || null : null;
       var begDv    = enc.beginning? row[enc.beginning.name] || null : null;
       var ordDv    = enc.ordered  ? row[enc.ordered.name]   || null : null;
-      var limDv    = enc.limit    ? row[enc.limit.name]     || null : null;
+      /* limit comes from Detail tile (enc id = 'detail') */
+      var limDv    = enc.detail   ? row[enc.detail.name]   || null : null;
 
       if(!dateDv||!endDv) return;
 
