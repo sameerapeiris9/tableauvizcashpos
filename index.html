@@ -2,241 +2,27 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Cash Analytics</title>
+<title>Cash Analytics Debug</title>
 <script src="https://cdn.jsdelivr.net/gh/tableau/extensions-api/lib/tableau.extensions.1.latest.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --bg:#f4f6f9;--card:#fff;--bdr:#e2e8f0;--surf:#f1f5f9;--surf2:#f8fafc;
-  --t1:#0f172a;--t2:#334155;--t3:#64748b;--t4:#94a3b8;--t5:#cbd5e1;
-  --g:#16a34a;--gb:#dcfce7;--gd:#15803d;
-  --r:#dc2626;--rb:#fee2e2;--rd:#b91c1c;
-  --a:#f59e0b;--ab:#fef3c7;--ad:#b45309;
-  --b:#3b82f6;--bb:#eff6ff;--bd:#1d4ed8;
-  --p:#8b5cf6;--pb:#f5f3ff;
-  --font:'Inter',-apple-system,sans-serif;
-}
-html,body{
-  width:100%;height:100%;background:var(--bg);
-  font-family:var(--font);
-  display:flex;align-items:flex-start;justify-content:center;
-  overflow:auto;-webkit-font-smoothing:antialiased;
-}
-#app{width:calc(100% - 16px);max-width:900px;padding:8px 0 12px;}
-
-/* ── SHELL ── */
-.shell{
-  background:var(--card);border-radius:16px;
-  border:0.5px solid var(--bdr);overflow:hidden;
-  box-shadow:0 1px 3px rgba(0,0,0,.04),0 6px 24px rgba(0,0,0,.07);
-  animation:rise .28s cubic-bezier(.22,.68,0,1.1) both;
-}
-@keyframes rise{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
-
-/* ── TOPBAR ── */
-.topbar{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:12px 16px 10px;border-bottom:0.5px solid var(--surf);
-  flex-wrap:wrap;gap:8px;
-}
-.topbar-left{display:flex;align-items:center;gap:10px;}
-.title{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);}
-.live-dot{width:6px;height:6px;border-radius:50%;background:var(--g);box-shadow:0 0 0 2px var(--gb);}
-.tgl-group{display:flex;gap:2px;background:var(--surf);border-radius:7px;padding:2px;}
-.tgl{
-  font-size:9.5px;font-weight:600;padding:3px 10px;
-  border-radius:5px;border:none;cursor:pointer;
-  background:transparent;color:var(--t4);
-  font-family:var(--font);transition:all .15s;
-}
-.tgl:hover{color:var(--t2);}
-.tgl.on{background:var(--card);color:var(--t1);box-shadow:0 1px 2px rgba(0,0,0,.08);}
-
-/* ── KPI STRIP ── */
-.kpi-strip{
-  display:grid;
-  grid-template-columns:repeat(5,minmax(0,1fr));
-  border-bottom:0.5px solid var(--surf);
-}
-.kpi{padding:10px 12px;border-right:0.5px solid var(--surf);}
-.kpi:last-child{border-right:none;}
-.kpi-l{font-size:8px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--t4);margin-bottom:4px;}
-.kpi-v{font-size:17px;font-weight:600;color:var(--t1);letter-spacing:-0.02em;line-height:1;margin-bottom:2px;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.kpi-d{font-size:8.5px;font-weight:500;}
-.kpi-d.g{color:var(--gd);}.kpi-d.r{color:var(--rd);}.kpi-d.a{color:var(--ad);}.kpi-d.b{color:var(--bd);}.kpi-d.n{color:var(--t4);}
-
-/* ── CHART ── */
-.chart-wrap{padding:14px 16px 4px;position:relative;}
-#chart{width:100%;display:block;}
-.axis-strip{display:flex;justify-content:space-between;padding:3px 16px 8px;font-size:8.5px;color:var(--t5);}
-
-/* ── INSIGHT ROW ── */
-.insight-row{
-  display:grid;
-  grid-template-columns:repeat(4,minmax(0,1fr));
-  border-top:0.5px solid var(--surf);
-}
-.ins{padding:9px 12px;border-right:0.5px solid var(--surf);}
-.ins:last-child{border-right:none;}
-.ins-l{font-size:8px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--t4);margin-bottom:3px;}
-.ins-v{font-size:12px;font-weight:600;color:var(--t1);margin-bottom:1px;font-variant-numeric:tabular-nums;}
-.ins-d{font-size:8.5px;color:var(--t4);}
-
-/* ── LEGEND ── */
-.legend{
-  display:flex;gap:14px;flex-wrap:wrap;align-items:center;
-  padding:8px 16px 10px;border-top:0.5px solid var(--surf);
-}
-.leg{display:flex;align-items:center;gap:5px;font-size:9.5px;color:var(--t3);}
-.leg-ln{width:16px;height:2px;border-radius:2px;flex-shrink:0;}
-.leg-bar{width:8px;height:8px;border-radius:2px;flex-shrink:0;}
-
-/* ── RESPONSIVE ── */
-#app[data-size="xs"] .kpi-strip{grid-template-columns:repeat(3,1fr);}
-#app[data-size="xs"] .kpi:nth-child(4),
-#app[data-size="xs"] .kpi:nth-child(5){border-top:0.5px solid var(--surf);}
-#app[data-size="xs"] .insight-row{grid-template-columns:1fr 1fr;}
-#app[data-size="xs"] .ins:nth-child(2){border-right:none;}
-#app[data-size="xs"] .ins:nth-child(3),
-#app[data-size="xs"] .ins:nth-child(4){border-top:0.5px solid var(--surf);}
-#app[data-size="sm"] .kpi-strip{grid-template-columns:repeat(5,1fr);}
+  body{font-family:monospace;font-size:11px;background:#f4f6f9;padding:12px;margin:0}
+  .ok{background:#dcfce7;color:#15803d;padding:6px 10px;border-radius:6px;margin-bottom:8px;font-weight:600}
+  .err{background:#fee2e2;color:#b91c1c;padding:6px 10px;border-radius:6px;margin-bottom:8px;font-weight:600}
+  h4{font-size:10px;font-weight:700;color:#64748b;letter-spacing:.06em;text-transform:uppercase;margin:10px 0 4px}
+  pre{background:#fff;border:0.5px solid #e2e8f0;border-radius:6px;padding:8px;white-space:pre-wrap;word-break:break-all;max-height:260px;overflow-y:auto;font-size:10px}
 </style>
 </head>
 <body>
-<div id="app">
-<div class="shell">
-
-  <div class="topbar">
-    <div class="topbar-left">
-      <div class="live-dot"></div>
-      <span class="title" id="chart-title">Cash Position Analytics</span>
-    </div>
-    <div class="tgl-group">
-      <button class="tgl" data-w="3">3M</button>
-      <button class="tgl" data-w="6">6M</button>
-      <button class="tgl" data-w="12">1Y</button>
-      <button class="tgl on" data-w="0">All</button>
-    </div>
-  </div>
-
-  <div class="kpi-strip">
-    <div class="kpi"><div class="kpi-l">Ending Balance</div><div class="kpi-v" id="k-end">—</div><div class="kpi-d b" id="k-end-d">Latest</div></div>
-    <div class="kpi"><div class="kpi-l">Beginning Bal.</div><div class="kpi-v" id="k-beg">—</div><div class="kpi-d b" id="k-beg-d">Period start</div></div>
-    <div class="kpi"><div class="kpi-l">Ordered Cash</div><div class="kpi-v" id="k-ord">—</div><div class="kpi-d n" id="k-ord-d">Total period</div></div>
-    <div class="kpi"><div class="kpi-l">Limit</div><div class="kpi-v" id="k-lim">—</div><div class="kpi-d a" id="k-lim-d">Cap</div></div>
-    <div class="kpi"><div class="kpi-l">Utilisation</div><div class="kpi-v" id="k-util">—</div><div class="kpi-d n" id="k-util-d">vs limit</div></div>
-  </div>
-
-  <div class="chart-wrap">
-    <canvas id="chart" height="180"></canvas>
-  </div>
-  <div class="axis-strip"><span id="ax-l"></span><span id="ax-r"></span></div>
-
-  <div class="insight-row">
-    <div class="ins">
-      <div class="ins-l">▲ Max Ending Balance</div>
-      <div class="ins-v" id="ins-max-v">—</div>
-      <div class="ins-d" id="ins-max-d">—</div>
-    </div>
-    <div class="ins">
-      <div class="ins-l">▼ Min Ending Balance</div>
-      <div class="ins-v" id="ins-min-v">—</div>
-      <div class="ins-d" id="ins-min-d">—</div>
-    </div>
-    <div class="ins">
-      <div class="ins-l">⊘ Limit Breached</div>
-      <div class="ins-v" id="ins-breach-v">—</div>
-      <div class="ins-d" id="ins-breach-d">—</div>
-    </div>
-    <div class="ins">
-      <div class="ins-l">↕ Avg Ending Balance</div>
-      <div class="ins-v" id="ins-avg-v">—</div>
-      <div class="ins-d" id="ins-avg-d">—</div>
-    </div>
-  </div>
-
-  <div class="legend">
-    <div class="leg"><div class="leg-ln" style="background:#16a34a"></div>Ending Balance</div>
-    <div class="leg"><div class="leg-ln" style="background:#3b82f6;border-top:2px dashed #3b82f6;height:0;border-radius:0"></div>Beginning Balance</div>
-    <div class="leg"><div class="leg-bar" style="background:#f59e0b55;border:1px solid #f59e0b"></div>Ordered Cash</div>
-    <div class="leg"><div class="leg-ln" style="background:#cbd5e1;border-top:2px dashed #cbd5e1;height:0;border-radius:0"></div>Limit</div>
-  </div>
-
-</div>
-</div>
+<div id="status">Initialising…</div>
+<h4>Encoding map</h4><pre id="enc-out">waiting…</pre>
+<h4>Total rows returned</h4><pre id="row-count">waiting…</pre>
+<h4>Row[0] — all fields</h4><pre id="row0">waiting…</pre>
+<h4>Row[1] — all fields</h4><pre id="row1">waiting…</pre>
+<h4>Date field parse test</h4><pre id="date-test">waiting…</pre>
 
 <script>
 'use strict';
 (function(){
-
-  var $=function(id){return document.getElementById(id);};
-  var appEl=$('app');
-  var chartObj=null;
-  var ALL=[];
-  var activeW=0;
-
-  /* ── number format ── */
-  function fmtN(n){
-    if(n===null||isNaN(n)) return '—';
-    var abs=Math.abs(n),s=n<0?'-':'';
-    if(abs>=1e9) return s+(abs/1e9).toFixed(2)+'B';
-    if(abs>=1e6) return s+(abs/1e6).toFixed(2)+'M';
-    if(abs>=1e3) return s+Math.round(abs).toLocaleString('en-US');
-    return s+abs.toFixed(0);
-  }
-
-  /* ── date parsing — same robust approach as Budget Achievement ── */
-  var ML=['january','february','march','april','may','june','july','august','september','october','november','december'];
-  var MS=['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
-  function parseDate(str){
-    if(!str||str==='%null%'||str==='Null') return null;
-    var s=str.trim();
-    var iso=s.match(/^(\d{4})-(\d{2})/);
-    if(iso) return new Date(parseInt(iso[1]),parseInt(iso[2])-1,1);
-    var pts=s.split(/[\s,\/\-]+/);
-    if(pts.length>=2){
-      var ms=pts[0].toLowerCase();
-      var mi=ML.indexOf(ms); if(mi<0) mi=MS.indexOf(ms.slice(0,3));
-      var yr=parseInt(pts[pts.length-1]);
-      if(mi>=0&&!isNaN(yr)) return new Date(yr,mi,1);
-      /* try DD/MM/YYYY */
-      if(pts.length===3){
-        var d=parseInt(pts[0]),m=parseInt(pts[1]),y=parseInt(pts[2]);
-        if(!isNaN(d)&&!isNaN(m)&&!isNaN(y)) return new Date(y,m-1,d);
-      }
-    }
-    var d=new Date(s);
-    return isNaN(d.getTime())?null:d;
-  }
-  function d2n(d){return d?d.getFullYear()*10000+d.getMonth()*100+d.getDate():0;}
-  function fmtDate(d){
-    if(!d) return '—';
-    var M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    return d.getDate()+' '+M[d.getMonth()]+' '+d.getFullYear();
-  }
-  function shortDate(d){
-    if(!d) return '';
-    var M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    return M[d.getMonth()]+' \''+String(d.getFullYear()).slice(2);
-  }
-
-  /* ── responsive ── */
-  function applyScale(w){
-    var fs=Math.min(14,Math.max(9,Math.round((w/900)*13)));
-    appEl.style.fontSize=fs+'px';
-    var sz=w<480?'xs':w<640?'sm':'lg';
-    appEl.setAttribute('data-size',sz);
-    if(chartObj) chartObj.resize();
-  }
-  if(window.ResizeObserver){
-    new ResizeObserver(function(e){applyScale(e[0].contentRect.width);}).observe(appEl);
-  }
-  window.addEventListener('resize',function(){applyScale(appEl.offsetWidth||900);});
-
-  /* ── data reader ── confirmed working pattern ── */
   async function getData(ws){
     var rows=[],rdr=await ws.getSummaryDataReaderAsync(undefined,{ignoreSelection:true});
     for(var i=0;i<rdr.pageCount;i++){
@@ -250,7 +36,6 @@ html,body{
     await rdr.releaseAsync();
     return rows;
   }
-
   async function getEnc(ws){
     var spec=await ws.getVisualSpecificationAsync(),map={};
     if(spec.activeMarksSpecificationIndex<0) return map;
@@ -258,326 +43,62 @@ html,body{
         .encodings.forEach(function(e){map[e.id]=e.field;});
     return map;
   }
-
-  /* ── process data ── */
-  function process(rows,enc){
-    if(!enc.date||!enc.ending) return [];
-    var pts=[];
-    rows.forEach(function(row){
-      var dateDv   = enc.date     ? row[enc.date.name]      || null : null;
-      var endDv    = enc.ending   ? row[enc.ending.name]    || null : null;
-      var begDv    = enc.beginning? row[enc.beginning.name] || null : null;
-      var ordDv    = enc.ordered  ? row[enc.ordered.name]   || null : null;
-      /* limit comes from Detail tile (enc id = 'detail') */
-      var limDv    = enc.detail   ? row[enc.detail.name]   || null : null;
-
-      if(!dateDv||!endDv) return;
-
-      function num(dv){
-        if(!dv) return null;
-        var n=parseFloat(dv.nativeValue!==undefined?dv.nativeValue:dv.value);
-        return isNaN(n)?null:n;
-      }
-
-      /* parse date */
-      var dateObj=null;
-      if(typeof dateDv.nativeValue==='number'){
-        dateObj=new Date(dateDv.nativeValue);
-        if(isNaN(dateObj.getTime())) dateObj=null;
-      }
-      if(!dateObj){
-        var fv=dateDv.formattedValue&&dateDv.formattedValue!=='%null%'?dateDv.formattedValue:String(dateDv.value);
-        dateObj=parseDate(fv);
-      }
-      if(!dateObj) return;
-
-      var label=dateDv.formattedValue&&dateDv.formattedValue!=='%null%'?dateDv.formattedValue:shortDate(dateObj);
-
-      pts.push({
-        date:dateObj,
-        num:d2n(dateObj),
-        label:label,
-        ending:num(endDv),
-        beginning:num(begDv),
-        ordered:num(ordDv),
-        limit:num(limDv)
-      });
-    });
-
-    /* deduplicate by date num */
-    var seen={};
-    pts.forEach(function(p){if(!seen[p.num]||p.date>seen[p.num].date) seen[p.num]=p;});
-    var u=Object.values(seen);
-    u.sort(function(a,b){return a.num-b.num;});
-    return u;
-  }
-
-  /* ── slice by window ── */
-  function slice(w){return w===0?ALL:ALL.slice(Math.max(0,ALL.length-w));}
-
-  /* ── update KPIs ── */
-  function updateKPIs(d){
-    if(!d.length) return;
-    var last=d[d.length-1], first=d[0];
-
-    /* ending balance */
-    var endV=last.ending;
-    $('k-end').textContent=fmtN(endV);
-    $('k-end-d').textContent=shortDate(last.date)||'Latest';
-
-    /* beginning */
-    var begV=first.beginning!==null?first.beginning:first.ending;
-    $('k-beg').textContent=fmtN(begV);
-    $('k-beg-d').textContent=shortDate(first.date)||'Start';
-
-    /* ordered cash — sum over period */
-    var totOrd=d.reduce(function(s,p){return s+(p.ordered||0);},0);
-    var ordCls=totOrd>=0?'g':'r';
-    $('k-ord').textContent=(totOrd>=0?'+':'')+fmtN(totOrd);
-    $('k-ord-d').className='kpi-d '+ordCls;
-    $('k-ord-d').textContent=(totOrd>=0?'Net inflow':'Net outflow');
-
-    /* limit — use latest */
-    var limV=last.limit;
-    $('k-lim').textContent=fmtN(limV);
-    $('k-lim-d').textContent=limV?'Cap':'—';
-
-    /* utilisation */
-    if(endV&&limV&&limV!==0){
-      var util=(endV/limV)*100;
-      var uCls=util>=100?'r':util>=85?'a':'g';
-      $('k-util').textContent=util.toFixed(1)+'%';
-      $('k-util-d').className='kpi-d '+uCls;
-      $('k-util-d').textContent=util>=100?'⚠ Over limit':util>=85?'Near limit':'Within limit';
-    } else {
-      $('k-util').textContent='—';
-      $('k-util-d').textContent='—';
-    }
-  }
-
-  /* ── update insights ── */
-  function updateInsights(d){
-    if(!d.length) return;
-    var endings=d.map(function(p){return p.ending;}).filter(function(v){return v!==null;});
-    if(!endings.length) return;
-
-    var maxV=Math.max.apply(null,endings);
-    var minV=Math.min.apply(null,endings);
-    var maxPt=d.find(function(p){return p.ending===maxV;});
-    var minPt=d.find(function(p){return p.ending===minV;});
-    var avg=endings.reduce(function(s,v){return s+v;},0)/endings.length;
-
-    /* max */
-    $('ins-max-v').textContent=fmtN(maxV);
-    $('ins-max-d').textContent=maxPt?fmtDate(maxPt.date):'—';
-
-    /* min */
-    $('ins-min-v').textContent=fmtN(minV);
-    $('ins-min-d').textContent=minPt?fmtDate(minPt.date):'—';
-
-    /* limit breaches */
-    var breaches=d.filter(function(p){return p.ending!==null&&p.limit!==null&&p.ending>p.limit;});
-    $('ins-breach-v').textContent=breaches.length+' '+(breaches.length===1?'day':'days');
-    $('ins-breach-d').textContent=breaches.length===0?'Within limit always':'⚠ Limit exceeded';
-    $('ins-breach-d').style.color=breaches.length>0?'var(--rd)':'var(--gd)';
-
-    /* avg */
-    $('ins-avg-v').textContent=fmtN(avg);
-    $('ins-avg-d').textContent='Over '+d.length+' periods';
-  }
-
-  /* ── draw / update chart ── */
-  function drawChart(d){
-    var labels  = d.map(function(p){return p.label;});
-    var endings = d.map(function(p){return p.ending;});
-    var begins  = d.map(function(p){return p.beginning;});
-    var ordered = d.map(function(p){return p.ordered;});
-    var limits  = d.map(function(p){return p.limit;});
-
-    /* axis labels */
-    $('ax-l').textContent=labels[0]||'';
-    $('ax-r').textContent=labels[labels.length-1]||'';
-
-    /* y-axis range */
-    var allY=endings.concat(begins,limits).filter(function(v){return v!==null;});
-    var yMin=Math.max(0,Math.floor((Math.min.apply(null,allY)*0.95)/1e8)*1e8);
-    var yMax=Math.ceil((Math.max.apply(null,allY)*1.05)/1e8)*1e8;
-
-    /* ordered axis range */
-    var ordVals=ordered.filter(function(v){return v!==null;});
-    var ordMax=ordVals.length?Math.max.apply(null,ordVals.map(Math.abs))*1.5:1;
-
-    var fs=parseInt(document.documentElement.style.fontSize)||13;
-    var tickFs=Math.max(7,Math.round(fs*0.65));
-    var ttFs=Math.max(9,Math.round(fs*0.84));
-
-    if(!chartObj){
-      var ctx=$('chart').getContext('2d');
-      chartObj=new Chart(ctx,{
-        data:{
-          labels:labels,
-          datasets:[
-            {
-              type:'line',label:'Ending Balance',
-              data:endings,
-              borderColor:'#16a34a',borderWidth:2.5,
-              pointBackgroundColor:'#16a34a',pointRadius:3,
-              pointBorderColor:'#fff',pointBorderWidth:1.5,
-              pointHoverRadius:5,tension:.35,fill:false,
-              yAxisID:'y',order:1
-            },
-            {
-              type:'line',label:'Beginning Balance',
-              data:begins,
-              borderColor:'#3b82f6',borderWidth:1.5,
-              borderDash:[4,3],pointRadius:0,
-              tension:.35,fill:false,
-              yAxisID:'y',order:2
-            },
-            {
-              type:'bar',label:'Ordered Cash',
-              data:ordered,
-              backgroundColor:ordered.map(function(v){return v>=0?'rgba(245,158,11,0.2)':'rgba(220,38,38,0.2)';}),
-              borderColor:ordered.map(function(v){return v>=0?'#f59e0b':'#dc2626';}),
-              borderWidth:1,borderRadius:3,borderSkipped:false,
-              yAxisID:'y2',order:3
-            },
-            {
-              type:'line',label:'Limit',
-              data:limits,
-              borderColor:'#cbd5e1',borderWidth:1.5,
-              borderDash:[6,4],pointRadius:0,
-              fill:false,yAxisID:'y',order:4
+  window.onload=tableau.extensions.initializeAsync().then(function(){
+    var ws=tableau.extensions.worksheetContent.worksheet;
+    var update=async function(){
+      try{
+        document.getElementById('status').className='ok';
+        document.getElementById('status').textContent='✓ Init OK — '+ws.name;
+        var data=await getData(ws);
+        var enc=await getEnc(ws);
+        /* enc */
+        var em={};
+        Object.keys(enc).forEach(function(k){em[k]=enc[k]?{name:enc[k].name,role:enc[k].role,dataType:enc[k].dataType}:null;});
+        document.getElementById('enc-out').textContent=JSON.stringify(em,null,2);
+        /* row count */
+        document.getElementById('row-count').textContent='rows: '+data.length;
+        /* row 0 */
+        function dumpRow(r){
+          var d={};
+          Object.keys(r).forEach(function(k){
+            var dv=r[k];
+            d[k]={value:dv?dv.value:null,nativeValue:dv?dv.nativeValue:null,formattedValue:dv?dv.formattedValue:null};
+          });
+          return JSON.stringify(d,null,2);
+        }
+        document.getElementById('row0').textContent=data.length>0?dumpRow(data[0]):'NO DATA';
+        document.getElementById('row1').textContent=data.length>1?dumpRow(data[1]):'ONLY 1 ROW';
+        /* date parse test */
+        if(data.length>0&&enc.date){
+          var dv=data[0][enc.date.name];
+          var info='fieldName: '+enc.date.name+'\n';
+          if(dv){
+            info+='value: '+JSON.stringify(dv.value)+'\n';
+            info+='nativeValue: '+JSON.stringify(dv.nativeValue)+'\n';
+            info+='formattedValue: '+JSON.stringify(dv.formattedValue)+'\n';
+            if(typeof dv.nativeValue==='number'){
+              var d=new Date(dv.nativeValue);
+              info+='parsed as ms epoch: '+d.toISOString()+'\n';
             }
-          ]
-        },
-        options:{
-          responsive:true,maintainAspectRatio:false,
-          interaction:{mode:'index',intersect:false},
-          plugins:{
-            legend:{display:false},
-            tooltip:{
-              backgroundColor:'rgba(10,10,10,.9)',
-              titleColor:'#fff',bodyColor:'rgba(255,255,255,.75)',
-              titleFont:{size:ttFs,weight:'600',family:'Inter'},
-              bodyFont:{size:Math.max(8,Math.round(fs*.76)),family:'Inter'},
-              padding:10,cornerRadius:8,
-              callbacks:{
-                label:function(ctx2){
-                  var v=ctx2.raw;
-                  if(v===null) return null;
-                  return ' '+ctx2.dataset.label+': '+fmtN(v);
-                }
-              }
-            }
-          },
-          scales:{
-            x:{
-              grid:{display:false},border:{display:false},
-              ticks:{font:{size:tickFs},color:'#cbd5e1',maxRotation:45,autoSkip:true,maxTicksLimit:14}
-            },
-            y:{
-              min:yMin,max:yMax,
-              grid:{color:'rgba(0,0,0,.04)'},border:{display:false},
-              ticks:{
-                font:{size:tickFs},color:'#94a3b8',
-                callback:function(v){return fmtN(v);}
-              }
-            },
-            y2:{
-              display:false,
-              min:-ordMax,max:ordMax,
-              position:'right'
-            }
+          } else {
+            info+='DataValue is NULL for date field in row[0]';
           }
+          document.getElementById('date-test').textContent=info;
+        } else {
+          document.getElementById('date-test').textContent='enc.date not mapped or no data';
         }
-      });
-
-      /* 100% limit reference overlay plugin */
-      Chart.register({
-        id:'limitLine',
-        afterDraw:function(ch){
-          var ys=ch.scales.y,xs=ch.scales.x;
-          if(!ys||!xs) return;
-          /* already drawn as a dataset — this just adds a subtle fill above limit */
-        }
-      });
-
-    } else {
-      chartObj.data.labels=labels;
-      chartObj.data.datasets[0].data=endings;
-      chartObj.data.datasets[1].data=begins;
-      chartObj.data.datasets[2].data=ordered;
-      chartObj.data.datasets[2].backgroundColor=ordered.map(function(v){return v>=0?'rgba(245,158,11,0.2)':'rgba(220,38,38,0.2)';});
-      chartObj.data.datasets[2].borderColor=ordered.map(function(v){return v>=0?'#f59e0b':'#dc2626';});
-      chartObj.data.datasets[3].data=limits;
-      chartObj.options.scales.y.min=yMin;
-      chartObj.options.scales.y.max=yMax;
-      chartObj.options.scales.y2.min=-ordMax;
-      chartObj.options.scales.y2.max=ordMax;
-      chartObj.options.scales.x.ticks.font.size=tickFs;
-      chartObj.options.scales.y.ticks.font.size=tickFs;
-      chartObj.update('active');
-    }
-  }
-
-  /* ── render view ── */
-  function renderView(w){
-    activeW=w;
-    var d=slice(w);
-    if(!d.length) return;
-    updateKPIs(d);
-    updateInsights(d);
-    drawChart(d);
-  }
-
-  /* ── wire toggles ── */
-  function wireToggles(){
-    document.querySelectorAll('.tgl').forEach(function(btn){
-      btn.addEventListener('click',function(){
-        document.querySelectorAll('.tgl').forEach(function(b){b.classList.remove('on');});
-        btn.classList.add('on');
-        renderView(parseInt(btn.dataset.w,10));
-      });
-    });
-  }
-
-  /* ── smart default ── */
-  function pickDefault(n){
-    var best='0';
-    if(n<=3) best='3'; else if(n<=6) best='6'; else if(n<=12) best='12';
-    document.querySelectorAll('.tgl').forEach(function(b){
-      b.classList.remove('on');
-      if(b.dataset.w===best) b.classList.add('on');
-    });
-    return parseInt(best,10);
-  }
-
-  /* ── confirmed working init pattern ── */
-  window.onload = tableau.extensions.initializeAsync().then(function(){
-    var ws = tableau.extensions.worksheetContent.worksheet;
-    wireToggles();
-    applyScale(appEl.offsetWidth||900);
-
-    var update = async function(){
-      var data = await getData(ws);
-      var enc  = await getEnc(ws);
-      var pts  = process(data,enc);
-      if(!pts.length) return;
-      ALL=pts;
-      /* title from ending field name */
-      if(enc.ending){
-        var n=enc.ending.name.replace(/^(SUM|AVG|MIN|MAX)\((.+)\)$/i,'$2').trim();
-        $('chart-title').textContent=n||'Cash Position Analytics';
+      }catch(e){
+        document.getElementById('status').className='err';
+        document.getElementById('status').textContent='ERROR: '+String(e);
+        console.error(e);
       }
-      var defW=pickDefault(pts.length);
-      renderView(defW);
     };
-
     ws.addEventListener(tableau.TableauEventType.SummaryDataChanged,update);
     update();
+  },function(e){
+    document.getElementById('status').className='err';
+    document.getElementById('status').textContent='INIT FAILED: '+String(e);
   });
-
 })();
 </script>
 </body>
