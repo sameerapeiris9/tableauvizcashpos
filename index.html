@@ -261,7 +261,7 @@ html,body{
 
   /* ── process data ── */
   function process(rows,enc){
-    if(!enc.date||!enc.ending) return [];
+    if(!enc.ending) return []; /* date falls back to detail tile */
     var pts=[];
     rows.forEach(function(row){
       var dateDv   = enc.date     ? row[enc.date.name]      || null : null;
@@ -278,6 +278,23 @@ html,body{
         var n=parseFloat(dv.nativeValue!==undefined?dv.nativeValue:dv.value);
         return isNaN(n)?null:n;
       }
+      /* If a field wasn't found by exact name, try case-insensitive partial match */
+      function findDv(encField){
+        if(!encField) return null;
+        var exact=row[encField.name];
+        if(exact) return exact;
+        /* fallback: search row keys */
+        var target=encField.name.toLowerCase();
+        var keys=Object.keys(row);
+        for(var ki=0;ki<keys.length;ki++){
+          if(keys[ki].toLowerCase()===target) return row[keys[ki]];
+        }
+        return null;
+      }
+      /* Re-read dvs using robust finder */
+      endDv  = findDv(enc.ending)    || endDv;
+      begDv  = findDv(enc.beginning) || begDv;
+      ordDv  = findDv(enc.ordered)   || ordDv;
 
       /* parse date — handles YEAR() integer, MONTH() integer, full dates */
       var dateObj=null;
